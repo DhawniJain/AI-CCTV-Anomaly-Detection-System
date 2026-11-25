@@ -1,0 +1,81 @@
+# =============================================================================
+# AI CCTV Anomaly Detection - central configuration
+# Edit the values marked  >>> EDIT <<<  after inspecting your downloaded dataset.
+# =============================================================================
+paths:
+  dataset_root: data/raw/cctv-exam-monitor-dataset   # >>> EDIT <<< folder you extracted the Kaggle zip into
+  cache_dir: data/cache          # extracted/resized frames + manifest.csv (safe to delete)
+  models_dir: models             # autoencoder.pt and threshold.json are saved here
+  outputs_dir: outputs           # logs, plots, CSVs, annotated videos, evidence frames
+
+data:
+  # How labels are obtained. Run `python -m src.dataset_inspector` first, then choose:
+  #   auto    -> csv if labels_csv is set, else folder names, else "none"
+  #   folders -> label comes from a directory name that EXACTLY matches a name below
+  #   csv     -> labels_csv with columns: path,label[,start_frame,end_frame]
+  #   none    -> no labels: normal-only training + qualitative analysis (no accuracy/F1)
+  label_mode: auto
+  labels_csv: null                                   # >>> EDIT <<< only if you create/obtain a label CSV
+  normal_class_names: [normal]                       # >>> EDIT <<< exact (case-insensitive) folder names
+  abnormal_class_names: [abnormal, anomaly, anomalous]   # >>> EDIT <<<
+  # If a file has no label (-1), may it be used as "normal" for training/threshold calibration?
+  # Only appropriate if you have reason to believe unlabeled footage is mostly normal activity.
+  assume_unlabeled_normal: true
+
+  frame_stride: 5            # keep every Nth video frame
+  max_frames_per_video: 400  # cap per video (memory/disk safety)
+  max_videos: null           # null = all
+  max_images: 20000          # cap for image-folder datasets (uniform subsample)
+  image_size: 128            # must be divisible by 16
+  grayscale: false
+  split:
+    strategy: auto           # auto | group | temporal | random   (see README "Splits and leakage")
+    train: 0.70
+    val: 0.15
+    test: 0.15
+  seed: 42
+
+model:
+  base_channels: 32
+  latent_dim: 128
+
+training:
+  epochs: 30
+  batch_size: 64
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  num_workers: 2
+  early_stopping_patience: 6
+  device: auto               # auto | cuda | mps | cpu
+
+anomaly:
+  score_method: mse          # mse (whole-frame mean error) | topk (mean of worst pixels)
+  topk_fraction: 0.02
+  smoothing_window: 5        # causal moving average over processed frames (1 = off)
+
+calibration:
+  method: percentile         # percentile | mean_std | f1 (f1 needs labeled val data with both classes)
+  percentile: 99.0
+  std_k: 3.0
+
+inference:
+  frame_stride: 5            # keep equal to data.frame_stride so smoothing behaves as calibrated
+  batch_size: 16
+  min_event_frames: 2        # a merged event needs at least this many flagged frames
+  event_gap_seconds: 2.0     # flagged frames closer than this are merged into one event
+  threshold_multiplier: 1.0  # effective threshold = calibrated threshold * this
+  max_output_width: 960
+  save_annotated_video: true
+
+yolo:
+  enabled: true
+  weights: yolov8n.pt        # downloaded automatically on first use (needs internet once)
+  conf: 0.35
+  imgsz: 640
+  classes: null              # null = all COCO classes; [0] = people only
+  every_n_frames: 1
+
+app:
+  max_upload_mb: 200
+  max_video_seconds: 300
+  allowed_extensions: [mp4, avi, mov, mkv, m4v]

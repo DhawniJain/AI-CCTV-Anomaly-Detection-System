@@ -1,0 +1,22 @@
+{
+  "threshold": 0.02985895796492696,
+  "method": "percentile",
+  "percentile": 99.0,
+  "std_k": 3.0,
+  "score_method": "mse",
+  "topk_fraction": 0.02,
+  "smoothing_window": 5,
+  "calibrated_on": "validation split only",
+  "n_val_frames_scored": 7734,
+  "n_val_normal_used": 7734,
+  "val_normal_score_stats": {
+    "mean": 0.01669798271228233,
+    "std": 0.004339465712654354,
+    "median": 0.016607119515538216,
+    "p95": 0.02371978077106177,
+    "p99": 0.02985895796492696,
+    "max": 0.04030126929283142
+  },
+  "synthetic_fixture": false,
+  "created": "2026-10-24T12:45:52"
+}
